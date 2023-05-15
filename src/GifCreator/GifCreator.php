@@ -11,45 +11,44 @@ namespace GifCreator;
  * @license http://opensource.org/licenses/gpl-license.php GNU Public License
  * @copyright Clément Guillemain
  */
-class GifCreator
-{
+class GifCreator {
     /**
-     * @var string The gif string source (old: this->GIF)
+     * @var string The gif string source
      */
     private $gif;
     
     /**
-     * @var string Encoder version (old: this->VER)
+     * @var string Encoder version
      */
 	private $version;
     
     /**
-     * @var boolean Check the image is build or not (old: this->IMG)
+     * @var boolean Check the image is built or not
      */
     private $imgBuilt;
 
     /**
-     * @var array Frames string sources (old: this->BUF)
+     * @var array Frames string sources
      */
 	private $frameSources;
     
     /**
-     * @var integer Gif loop (old: this->LOP)
+     * @var integer Gif loop
      */
 	private $loop;
     
     /**
-     * @var integer Gif dis (old: this->DIS)
+     * @var integer Gif dis
      */
 	private $dis;
     
     /**
-     * @var integer Gif color (old: this->COL)
+     * @var integer Gif color
      */
 	private $colour;
     
     /**
-     * @var array (old: this->ERR)
+     * @var array
      */
 	private $errors;
  
@@ -59,22 +58,21 @@ class GifCreator
     /**
      * Constructor
      */
-    public function __construct()
-    {
+    public function __construct() {
         $this->reset();
         
         // Static data
         $this->version = 'GifCreator';
         $this->errors = array(
-            'ERR00' => 'Does not supported function for only one image.',
+            'ERR00' => 'Input must be an array of frame images and corresponding durations',
     		'ERR01' => 'Source is not a GIF image.',
-    		'ERR02' => 'You have to give resource image variables, image URL or image binary sources in $frames array.',
-    		'ERR03' => 'Does not make animation from animated GIF source.',
+    		'ERR02' => 'You have to give resource image variables, image URLs or image binary sources in $frames array.',
+    		'ERR03' => 'Animation cannot be made from animated GIF source.',
         );
     }
 
 	/**
-     * Create the GIF string (old: GIFEncoder)
+     * Create the GIF string
      * 
      * @param array $frames An array of frame: can be file paths, resource image variables, binary sources or image URLs
      * @param array $durations An array containing the duration of each frame
@@ -82,31 +80,27 @@ class GifCreator
      * 
      * @return string The GIF string source
      */
-	public function create($frames = array(), $durations = array(), $loop = 0)
-    {
+	public function create($frames = array(), $durations = array(), $loop = 0) {
 		if (!is_array($frames) && !is_array($durations)) {
-            
-            throw new \Exception($this->version.': '.$this->errors['ERR00']);
+            throw new \Exception($this->version.': ' . $this->errors['ERR00']);
 		}
         
 		$this->loop = ($loop > -1) ? $loop : 0;
 		$this->dis = 2;
         
 		for ($i = 0; $i < count($frames); $i++) {
-
-			if (is_resource($frames[$i]) || $frames[$i] instanceof \GdImage) { // Resource var
-                
+			// Resource var of GDImage
+			if (is_resource($frames[$i]) || $frames[$i] instanceof \GdImage) {
                 $resourceImg = $frames[$i];
                 
                 ob_start();
                 imagegif($frames[$i]);
                 $this->frameSources[] = ob_get_contents();
                 ob_end_clean();
-                
-            } elseif (is_string($frames[$i])) { // File path or URL or Binary source code
-			     
-                if (file_exists($frames[$i]) || filter_var($frames[$i], FILTER_VALIDATE_URL)) { // File path
-                    
+			// File path or URL or Binary source code
+            } elseif (is_string($frames[$i])) {
+				// File path validity check
+                if (file_exists($frames[$i]) || filter_var($frames[$i], FILTER_VALIDATE_URL)) {
                     $frames[$i] = file_get_contents($frames[$i]);                    
                 }
                 
@@ -116,39 +110,29 @@ class GifCreator
                 imagegif($resourceImg);
                 $this->frameSources[] = ob_get_contents();
                 ob_end_clean();
-                 
-			} else { // Fail
-                
-                throw new \Exception($this->version.': '.$this->errors['ERR02']);
+			// Invalid type
+			} else {
+                throw new \Exception($this->version.': ' . $this->errors['ERR02']);
 			}
             
             if ($i == 0) {
-                
                 $colour = imagecolortransparent($resourceImg);
             }
             
 			if (substr($this->frameSources[$i], 0, 6) != 'GIF87a' && substr($this->frameSources[$i], 0, 6) != 'GIF89a') {
-			 
-                throw new \Exception($this->version.': '.$i.' '.$this->errors['ERR01']);
+                throw new \Exception($this->version.': ' . $i.' ' . $this->errors['ERR01']);
 			}
             
-			for ($j = (13 + 3 * (2 << (ord($this->frameSources[$i][10]) & 0x07))), $k = TRUE; $k; $j++) {
-			 
+			for ($j = (13 + 3 * (2 << (ord($this->frameSources[$i][10]) & 0x07))), $k = true; $k; $j++) {
 				switch ($this->frameSources[$i][$j]) {
-				    
 					case '!':
-                    
 						if ((substr($this->frameSources[$i], ($j + 3), 8)) == 'NETSCAPE') {
-                            
-                            throw new \Exception($this->version.': '.$this->errors['ERR03'].' ('.($i + 1).' source).');
+                            throw new \Exception($this->version . ': ' . $this->errors['ERR03'].' ('.($i + 1).' source).');
 						}
-                        
-					break;
-                        
+						break;
 					case ';':
-                    
 						$k = false;
-					break;
+						break;
 				}
 			}
             
@@ -156,11 +140,8 @@ class GifCreator
 		}
 		
         if (isset($colour)) {
-            
             $this->colour = $colour;
-                                    
         } else {
-            
             $red = $green = $blue = 0;
             $this->colour = ($red > -1 && $green > -1 && $blue > -1) ? ($red | ($green << 8) | ($blue << 16)) : -1;
         }
@@ -168,7 +149,6 @@ class GifCreator
 		$this->gifAddHeader();
         
 		for ($i = 0; $i < count($this->frameSources); $i++) {
-		  
 			$this->addGifFrames($i, $durations[$i]);
 		}
         
@@ -181,30 +161,27 @@ class GifCreator
     // ===================================================================================
     
 	/**
-     * Add the header gif string in its source (old: GIFAddHeader)
+     * Add the header gif string in its source
      */
-	public function gifAddHeader()
-    {
+	public function gifAddHeader() {
 		$cmap = 0;
 
 		if (ord($this->frameSources[0][10]) & 0x80) {
-		  
 			$cmap = 3 * (2 << (ord($this->frameSources[0][10]) & 0x07));
 
 			$this->gif .= substr($this->frameSources[0], 6, 7);
 			$this->gif .= substr($this->frameSources[0], 13, $cmap);
-			$this->gif .= "!\377\13NETSCAPE2.0\3\1".$this->encodeAsciiToChar($this->loop)."\0";
+			$this->gif .= "!\377\13NETSCAPE2.0\3\1" . $this->encodeAsciiToChar($this->loop)."\0";
 		}
 	}
     
 	/**
-     * Add the frame sources to the GIF string (old: GIFAddFrames)
+     * Add the frame sources to the GIF string
      * 
      * @param integer $i
      * @param integer $d
      */
-	public function addGifFrames($i, $d)
-    {
+	public function addGifFrames($i, $d) {
 		$Locals_str = 13 + 3 * (2 << (ord($this->frameSources[ $i ][10]) & 0x07));
 
 		$Locals_end = strlen($this->frameSources[$i]) - $Locals_str - 1;
@@ -219,9 +196,7 @@ class GifCreator
 		$Locals_ext = "!\xF9\x04".chr(($this->dis << 2) + 0).chr(($d >> 0 ) & 0xFF).chr(($d >> 8) & 0xFF)."\x0\x0";
 
 		if ($this->colour > -1 && ord($this->frameSources[$i][10]) & 0x80) {
-		  
 			for ($j = 0; $j < (2 << (ord($this->frameSources[$i][10] ) & 0x07)); $j++) {
-			 
 				if (ord($Locals_rgb[3 * $j + 0]) == (($this->colour >> 16) & 0xFF) &&
 					ord($Locals_rgb[3 * $j + 1]) == (($this->colour >> 8) & 0xFF) &&
 					ord($Locals_rgb[3 * $j + 2]) == (($this->colour >> 0) & 0xFF)
@@ -233,68 +208,52 @@ class GifCreator
 		}
         
 		switch ($Locals_tmp[0]) {
-		  
 			case '!':
-            
 				$Locals_img = substr($Locals_tmp, 8, 10);
-				$Locals_tmp = substr($Locals_tmp, 18, strlen($Locals_tmp) - 18);
-                                
-			break;
-                
+				$Locals_tmp = substr($Locals_tmp, 18, strlen($Locals_tmp) - 18);       
+				break;
 			case ',':
-            
 				$Locals_img = substr($Locals_tmp, 0, 10);
-				$Locals_tmp = substr($Locals_tmp, 10, strlen($Locals_tmp) - 10);
-                                
-			break;
+				$Locals_tmp = substr($Locals_tmp, 10, strlen($Locals_tmp) - 10);            
+				break;
 		}
         
 		if (ord($this->frameSources[$i][10]) & 0x80 && $this->imgBuilt) {
-		  
 			if ($Global_len == $Locals_len) {
-			 
 				if ($this->gifBlockCompare($Global_rgb, $Locals_rgb, $Global_len)) {
-				    
-					$this->gif .= $Locals_ext.$Locals_img.$Locals_tmp;
-                    
+					$this->gif .= $Locals_ext . $Locals_img . $Locals_tmp;
 				} else {
-				    
 					$byte = ord($Locals_img[9]);
 					$byte |= 0x80;
 					$byte &= 0xF8;
 					$byte |= (ord($this->frameSources[0][10]) & 0x07);
 					$Locals_img[9] = chr($byte);
-					$this->gif .= $Locals_ext.$Locals_img.$Locals_rgb.$Locals_tmp;
+					$this->gif .= $Locals_ext . $Locals_img . $Locals_rgb . $Locals_tmp;
 				}
-                
 			} else {
-			 
 				$byte = ord($Locals_img[9]);
 				$byte |= 0x80;
 				$byte &= 0xF8;
 				$byte |= (ord($this->frameSources[$i][10]) & 0x07);
 				$Locals_img[9] = chr($byte);
-				$this->gif .= $Locals_ext.$Locals_img.$Locals_rgb.$Locals_tmp;
+				$this->gif .= $Locals_ext . $Locals_img . $Locals_rgb . $Locals_tmp;
 			}
-            
 		} else {
-		  
-			$this->gif .= $Locals_ext.$Locals_img.$Locals_tmp;
+			$this->gif .= $Locals_ext . $Locals_img . $Locals_tmp;
 		}
         
 		$this->imgBuilt = true;
 	}
     
 	/**
-     * Add the gif string footer char (old: GIFAddFooter)
+     * Add the gif string footer char
      */
-	public function gifAddFooter()
-    {
+	public function gifAddFooter() {
 		$this->gif .= ';';
 	}
     
 	/**
-     * Compare two block and return the version (old: GIFBlockCompare)
+     * Compare two block and return the version
      * 
      * @param string $globalBlock
      * @param string $localBlock
@@ -302,8 +261,7 @@ class GifCreator
      * 
      * @return integer
 	 */
-	public function gifBlockCompare($globalBlock, $localBlock, $length)
-    {
+	public function gifBlockCompare($globalBlock, $localBlock, $length) {
 		for ($i = 0; $i < $length; $i++) {
 		  
 			if ($globalBlock[3 * $i + 0] != $localBlock[3 * $i + 0] ||
@@ -318,22 +276,20 @@ class GifCreator
 	}
     
 	/**
-     * Encode an ASCII char into a string char (old: GIFWord)
+     * Encode an ASCII char into a string char
      * 
      * $param integer $char ASCII char
      * 
      * @return string
 	 */
-	public function encodeAsciiToChar($char)
-    {
+	public function encodeAsciiToChar($char) {
 		return (chr($char & 0xFF).chr(($char >> 8) & 0xFF));
 	}
     
     /**
      * Reset and clean the current object
      */
-    public function reset()
-    {
+    public function reset() {
         $this->frameSources;
         $this->gif = 'GIF89a'; // the GIF header
         $this->imgBuilt = false;
@@ -344,14 +300,13 @@ class GifCreator
     
     // Getter / Setter
     // ===================================================================================
-    
+
 	/**
-     * Get the final GIF image string (old: GetAnimation)
+     * Get the final GIF image string
      * 
      * @return string
 	 */
-	public function getGif()
-    {
+	public function getGif() {
 		return $this->gif;
 	}
 }
