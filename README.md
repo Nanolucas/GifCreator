@@ -20,7 +20,7 @@ $frames = array(
     imagecreatefrompng("/../images/pic1.png"), // Resource var or GDImage
     "/../images/pic2.png", // Image file path
     file_get_contents("/../images/pic3.jpg"), // Binary source code
-    'http://thisisafakedomain.com/images/pic4.jpg', // URL
+    'https://example.com/images/pic4.jpg', // URL
 );
 
 // Create an array containing the duration (in millisecond) of each frames (in order too)

@@ -5,8 +5,8 @@ namespace GifCreator;
 /**
  * Create an animated GIF from multiple images
  * 
- * @version 1.0
- * @link https://github.com/Sybio/GifCreator
+ * @version 1.1
+ * @link https://github.com/Nanolucas/GifCreator
  * @author Sybio (Clément Guillemain  / @Sybio01)
  * @license http://opensource.org/licenses/gpl-license.php GNU Public License
  * @copyright Clément Guillemain
@@ -64,7 +64,7 @@ class GifCreator
         $this->reset();
         
         // Static data
-        $this->version = 'GifCreator: Under development';
+        $this->version = 'GifCreator';
         $this->errors = array(
             'ERR00' => 'Does not supported function for only one image.',
     		'ERR01' => 'Source is not a GIF image.',
